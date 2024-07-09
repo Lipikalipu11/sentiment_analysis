@@ -18,11 +18,6 @@ def get_sentiment(reviewbody):
     y = ensemble_model.predict(x)
     return y[0]  # Return the first (and only) prediction
 
-# Displaying the image from a local file
-image = open('images-2.jpeg', 'rb')
-st.image(image, caption='Image', use_column_width=True)
-
-
 # Streamlit app
 st.title("Sentiment Analysis App")
 
