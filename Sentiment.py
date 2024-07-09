@@ -1,28 +1,15 @@
+ import streamlit as st
+import joblib
 import pickle
-import re
-import string
-
-import nltk
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.svm import SVC
 
-# Load necessary resources (vectorizer and model)
-with open('vectorizer.pkl', 'rb') as f:
-    vectorizer = pickle.load(f)
-
-with open('ensemble_model.pkl', 'rb') as f:
-    ensemble_model = pickle.load(f)
-
-# Define preprocessor functions and resources
-HTMLTAGS = re.compile(r'<.*?>')
-table = str.maketrans('', '', '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~')
-remove_digits = str.maketrans('', '', '0123456789')
-MULTIPLE_WHITESPACE = re.compile(r"\s+")
-lemmatizer = WordNetLemmatizer()
-final_stopwords = set(stopwords.words('english'))
+# Load the trained TF-IDF vectorizer and SVM model
+vector = pickle.load(open('./model/vectorized.pkl', 'rb'))
+model = pickle.load(open('./model/ensemble_model.pkl', 'rb'))
 
 def preprocessor(review):
+    # Same preprocessor function as before
     review = HTMLTAGS.sub(r'', review)
     review = review.translate(table)
     review = review.translate(remove_digits)
@@ -32,20 +19,29 @@ def preprocessor(review):
     review = ' '.join([lemmatizer.lemmatize(word, get_wordnet_pos(word)) for word in review])
     return review
 
-def get_wordnet_pos(word):
-    from nltk.corpus import wordnet
-    tag = nltk.pos_tag([word])[0][1][0].upper()
-    tag_dict = {"J": wordnet.ADJ, "N": wordnet.NOUN, "V": wordnet.VERB, "R": wordnet.ADV}
-    return tag_dict.get(tag, wordnet.NOUN)
-
 def get_sentiment(review):
     processed_review = preprocessor(review)
     x = vectorizer.transform([processed_review])
     y = ensemble_model.predict(x)
     return y[0]
 
-if __name__ == "__main__":
-    # Example usage
-    review = "I excellent and love this laptop"
-    sentiment = get_sentiment(review)
-    print(f"This is a {sentiment} sentiment!")
+# Streamlit app title and description
+st.title('Amazon Product Review Sentiment Analysis')
+st.write('Enter a product review to predict its sentiment (Positive, Neutral, or Negative).')
+
+# Text input for the user to enter a review
+user_input = st.text_area('Enter a product review:')
+
+# Predict sentiment when button is pressed
+if st.button('Predict Sentiment'):
+    if user_input.strip() != '':
+        sentiment = predict_sentiment(user_input)
+        st.write(f'The sentiment is: *{sentiment}*')
+    else:
+        st.write("Please enter a review to predict.")
+
+# Optional: Add information about the model
+st.sidebar.title("About")
+st.sidebar.write("""
+This app uses a Support Vector Machine (SVM) model trained on Amazon product reviews to classify the sentiment of new reviews as positive, neutral, or negative. The text input is processed using TF-IDF vectorization before being fed into the model.
+""")
