@@ -1,4 +1,4 @@
-streamlit==0.90.0    # Version of Streamlit used
+streamlit    # Version of Streamlit used
 nltk==3.6.5          # Natural Language Toolkit for text preprocessing
 scikit-learn==0.24.2 # Machine learning library for model building
 
