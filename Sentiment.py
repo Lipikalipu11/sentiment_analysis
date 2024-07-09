@@ -9,6 +9,7 @@ def load_model_and_vectorizer():
         ensemble_model = pickle.load(f)
     return vectorizer, ensemble_model
 
+
 # Function to get sentiment
 def get_sentiment(reviewbody):
     vectorizer, ensemble_model = load_model_and_vectorizer()
@@ -16,6 +17,11 @@ def get_sentiment(reviewbody):
     # Predicting sentiment
     y = ensemble_model.predict(x)
     return y[0]  # Return the first (and only) prediction
+
+# Displaying the image from a local file
+image = open('images-2.jpeg', 'rb')
+st.image(image, caption='Image', use_column_width=True)
+
 
 # Streamlit app
 st.title("Sentiment Analysis App")
