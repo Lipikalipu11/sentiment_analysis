@@ -5,7 +5,7 @@ import pickle
 def load_model_and_vectorizer():
     with open("vectorizer.pkl", "rb") as f:
         vectorizer = pickle.load(f)
-    with open("nsemble_model.pkl", "rb") as f:
+    with open("ensemble_model.pkl", "rb") as f:
         ensemble_model = pickle.load(f)
     return vectorizer, ensemble_model
 
