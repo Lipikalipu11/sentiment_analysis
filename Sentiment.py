@@ -1,42 +1,48 @@
-{\rtf1\ansi\ansicpg1252\cocoartf2761
-\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
-{\colortbl;\red255\green255\blue255;}
-{\*\expandedcolortbl;;}
-\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+import pickle
+import re
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 
-\f0\fs24 \cf0 import streamlit as st\
-import pickle\
-\
-# Function to load the model and vectorizer\
-def load_model_and_vectorizer():\
-    with open("transformer.pkl", "rb") as f:\
-        vectorizer = pickle.load(f)\
-    with open("model.pkl", "rb") as f:\
-        ensemble_model = pickle.load(f)\
-    return vectorizer, ensemble_model\
-\
-# Function to get sentiment\
-def get_sentiment(reviewbody):\
-    vectorizer, ensemble_model = load_model_and_vectorizer()\
-    x = vectorizer.transform([reviewbody])\
-    y = ensemble_model.predict(x)\
-    return y[0]  # Return the first (and only) prediction\
-\
-# Streamlit app\
-def main():\
-    st.title("Sentiment Analysis App")\
-    st.write("Enter a review to predict its sentiment")\
-\
-    review = st.text_area("Review", "")\
-\
-    if st.button("Predict Sentiment"):\
-        if review.strip() == "":\
-            st.write("Please enter a review.")\
-        else:\
-            sentiment = get_sentiment(review)\
-            st.write(f"This is a \{sentiment\} sentiment!")\
-\
-if __name__ == "__main__":\
-    main()\
-}
+# Load necessary resources (vectorizer and model)
+with open('vectorizer.pkl', 'rb') as f:
+    vectorizer = pickle.load(f)
+
+with open('ensemble_model.pkl', 'rb') as f:
+    ensemble_model = pickle.load(f)
+
+# Define preprocessor functions and resources
+HTMLTAGS = re.compile(r'<.*?>')
+table = str.maketrans('', '', '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~')
+remove_digits = str.maketrans('', '', '0123456789')
+MULTIPLE_WHITESPACE = re.compile(r"\s+")
+lemmatizer = WordNetLemmatizer()
+final_stopwords = set(stopwords.words('english'))
+
+def preprocessor(review):
+    review = HTMLTAGS.sub(r'', review)
+    review = review.translate(table)
+    review = review.translate(remove_digits)
+    review = review.lower()
+    review = MULTIPLE_WHITESPACE.sub(" ", review).strip()
+    review = [word for word in review.split() if word not in final_stopwords]
+    review = ' '.join([lemmatizer.lemmatize(word, get_wordnet_pos(word)) for word in review])
+    return review
+
+def get_wordnet_pos(word):
+    from nltk.corpus import wordnet
+    tag = nltk.pos_tag([word])[0][1][0].upper()
+    tag_dict = {"J": wordnet.ADJ, "N": wordnet.NOUN, "V": wordnet.VERB, "R": wordnet.ADV}
+    return tag_dict.get(tag, wordnet.NOUN)
+
+def get_sentiment(review):
+    processed_review = preprocessor(review)
+    x = vectorizer.transform([processed_review])
+    y = ensemble_model.predict(x)
+    return y[0]
+
+if __name__ == "__main__":
+    # Example usage
+    review = "I excellent and love this laptop"
+    sentiment = get_sentiment(review)
+    print(f"This is a {sentiment} sentiment!")
