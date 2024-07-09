@@ -2,7 +2,7 @@ import pickle
 import re
 import string
 # Install NLTK
-pip install nltk
+!pip install nltk
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
